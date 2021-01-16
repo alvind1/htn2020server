@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var fs = require('fs')
 var pg = require('pg')
-var cors = require('cors')
+var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -41,9 +41,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-app.listen(8000, () => {
-  console.log(`Example app listening at http://localhost:${8000}`)
-})
 
 module.exports = app;

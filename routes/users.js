@@ -107,6 +107,48 @@ router.put('/', async(req, res) => {
     res.send("bad1824");
   }
 })
+router.get('/woot', async (req, res, next) => {
+    var client = new pg.Client(config);
+    client.connect();
+    await client.query("ALTER TABLE users ADD COLUMN bio STRING, ADD COLUMN feature STRING");
+    let output = await client.query("SELECT * FROM users");
+    res.send(output);
+});
+
+router.post('/register', async (req, res, next) => {
+    let input = req.body;
+    var client = new pg.Client(config);
+    await client.connect();
+
+    let user  = await client.query(`SELECT * FROM users WHERE email='${input.email}' OR username='${input.username}'`);
+
+    if(user.rowCount > 0){
+        res.status(400);
+        res.send("email or username already taken");
+        return;
+    }
+
+    await client.query(`INSERT INTO users(firstname, lastname, email, password, username, phone) VALUES ('${input.firstName}','${input.lastName}','${input.email}','${input.password}','${input.username}', '${input.phone}')`);
+
+    user = await client.query(`SELECT * FROM users WHERE email='${input.email}'`);
+
+    res.send(user.rows[0]);
+});
+
+router.post('/login', async (req, res, next) => {
+    let input = req.body;
+    var client = new pg.Client(config);
+    await client.connect();
+
+    let user = await client.query(`SELECT * FROM users WHERE email='${input.email}' AND password='${input.password}'`);
+    if(user.rowCount == 0){
+        res.status(401);
+        res.send("invalid email password combo");
+        return;
+    }
+
+    res.send(user.rows[0]);
+});
 
 router.get('/', async (req, res, next) => {
   try{
