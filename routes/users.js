@@ -9,7 +9,7 @@ const {config, connectString} = require('../config')
 
 router.post('/image', async(req, res) => {
   var client = new pg.Client(config);
-  console.log("HI");
+  console.log("HI23412");
 
   client.connect()
   .catch((err) => {
@@ -19,6 +19,7 @@ router.post('/image', async(req, res) => {
   });
 
   output = fs.readFileSync('./Downloads/donkey.jpg');
+  
   encodedImage = new Promise(async (resolve, reject) => {
     try{
       resolve(await Buffer.from(output, 'binary').toString('base64'));
@@ -54,10 +55,10 @@ router.post('/image', async(req, res) => {
   return;
 });
 
-router.get('/:username', async(req, res) => {
+router.get('/byUser/:username', async(req, res) => {
   try{
     var client = new pg.Client(config);
-    console.log("HI");
+    console.log("H234");
   
     client.connect()
     .catch((err) => {
@@ -154,11 +155,33 @@ router.put('/:username', async(req, res) => {
   }
 })
 
+router.post('/fillCol', async(req, res) => {
+  let info = req.body; //Need table, column, value
+  var client = new pg.Client(config);
+  console.log("HI2");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query(`UPDATE ${info["table"]} SET ${info["column"]} = ${info["value"]}`)
+  .then(() => {
+    res.send("good");
+  })
+  .catch((err) => {
+    console.log(err.message);
+    res.send("bad23974");
+  })
+})
+
 router.put('/', async(req, res) => { 
   //changing table stuff
   try{
     var client = new pg.Client(config);
-    console.log("HI");
+    console.log("HI2");
   
     client.connect()
     .catch((err) => {
@@ -176,7 +199,12 @@ router.put('/', async(req, res) => {
 
     //output = await client.query("ALTER TABLE users ADD COLUMN userId ");
 
-    output = await client.query("UPDATE users SET username = 'testUsername' WHERE firstName = 'userFirst'");
+    //output = await client.query("UPDATE users SET username = 'testUsername' WHERE firstName = 'userFirst'");
+    //output = await client.query("ALTER TABLE users ADD PRIMARY KEY (username)");
+    //output = await client.query("ALTER TABLE users ALTER COLUMN username SET NOT NULL");
+    //output = await client.query("ALTER TABLE questions ADD COLUMN username STRING REFERENCES users(username)");
+    
+    //output = await client.query("ALTER TABLE users ADD COLUMN eliminated BOOLEAN");
 
     res.send("good123768");
   }catch(err){
@@ -228,10 +256,124 @@ router.post('/login', async (req, res, next) => {
     res.send(user.rows[0]);
 });
 
+router.post('/eliminate', async(req, res) => {
+  let info = req.body; //give eliminated username
+  var client = new pg.Client(config);
+  console.log("HI3");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query(`UPDATE users SET eliminated = TRUE WHERE username = '${info["username"]}'`)
+  .then(() => {
+    res.send("good");
+  })
+  .catch((err) => {
+    res.send("bad", err.message);
+  })
+})
+
+router.post('/beginGroup', async(req, res) => {
+  var client = new pg.Client(config);
+  console.log("HI3");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query(`CREATE TABLE questions (round INTEGER, question STRING, PRIMARY KEY (round))`)
+  .then(client.query(`CREATE TABLE answers (round INTEGER REFERENCES questions (round), answer STRING, username STRING REFERENCES users (username))`))
+  .then(() => {res.send("good")})
+  .catch((err) => {
+    console.log("bad192837", err.message);
+    res.send("bad12387")
+  })
+  client.end();
+});
+
+router.get('/column', async(req, res) => {
+  let info = req.body; //Needs column, table
+  var client = new pg.Client(config);
+  console.log("HI2alsdjfl;ksjdlkfj");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query(`SELECT ${info["column"]} FROM ${info["table"]}`)
+  .then((info) => {
+    console.log("good2", info);
+    res.send(info);
+  })
+  .catch((err) => {
+    console.log("err", err.message);
+    res.send("bad2394");
+  });
+})
+
+router.post('/question', async(req, res) => {
+  let info = req.body; //Needs question and username
+  var client = new pg.Client(config);
+  console.log("HI4");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query('SELECT count(*) FROM questions')
+  .then((num) => {
+    num = num.rows[0].count;
+    return client.query(`INSERT INTO questions(round, question, username) VALUES (${num}, '${info["question"]}', '${info["username"]}')`)
+  })
+  .then(() => {
+    res.send("good");
+  })
+  .catch((err) => {
+    console.log(err.message, "bad");
+    res.send("u oh8973");
+  })
+});
+
+router.post('/answer', async(req, res) => {
+  let info = req.body; //Needs answer, round, username
+  var client = new pg.Client(config);
+  console.log("HI4");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query(`INSERT INTO answers (round, answer, username) VALUES (${info["round"]}, '${info["answer"]}', '${info["username"]}')`)
+  .then(() => {
+    res.send("good");
+  })
+  .catch((err) => {
+    console.log(err.message, "bad");
+    res.send("u oh8973");
+  });
+})
+
+
 router.get('/', async (req, res, next) => { //gets all info about user
   try{
     var client = new pg.Client(config);
-    console.log("HI");
+    console.log("HI123");
 
     client.connect()
     .catch((err) => {
