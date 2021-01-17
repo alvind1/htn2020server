@@ -451,6 +451,31 @@ router.get('/column', async(req, res) => {
   });
 })
 
+router.get('/question', async(req, res) => {
+  var client = new pg.Client(config);
+  console.log("HI4");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query('SELECT * FROM questions')
+  .then((questions) => {
+    questions = questions['rows'];
+    return questions[questions.length-1];
+  })
+  .then((question) => {
+    res.send(question);
+  })
+  .catch((err) => {
+    console.log(err.message, "bad238");
+    res.send("bad2374");
+  })
+})
+
 router.post('/question', async(req, res) => {
   let info = req.body; //Needs question and username
   var client = new pg.Client(config);
