@@ -174,6 +174,7 @@ router.delete("/:username", async(req, res) => {
 })
 
 router.put('/:username', async(req, res) => {
+  //possible fields: firstName, lastName, age, email, bio, feature, profilePic
   try{
     var client = new pg.Client(config);
     console.log("HI");
@@ -210,8 +211,8 @@ router.put('/:username', async(req, res) => {
       commandText += `feature = '${req.body['feature']}',`
     }
 
-    if(req.body['profilePic']){
-      commandText += `profilePic = '{${req.body['profilePic'][0]}, ${req.body['profilePic'][0]}, ${req.body['profilePic'][0]}}',`
+    if(req.body['galleryPics']){
+      commandText += `galleryPics = '{${req.body['galleryPics'][0]}, ${req.body['galleryPics'][1]}, ${req.body['galleryPics'][2]}}',`
     }
 
     commandText = commandText.substring(0, commandText.length-1);
