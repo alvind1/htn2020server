@@ -9,6 +9,9 @@ const {config, connectString} = require('../config')
 /* GET users listing. */
 
 router.post('/testUpload', async (req, res) => {
+    var client = new pg.Client(config);
+    client.connect();
+    await client.query("ALTER TABLE users ADD COLUMN birthday STRING");
     console.log("asdfasdfa");
     res.send("yay");
 });
@@ -219,12 +222,17 @@ router.put('/:username', async(req, res) => {
       commandText += `galleryPics = '{${req.body['galleryPics'][0]}, ${req.body['galleryPics'][1]}, ${req.body['galleryPics'][2]}}',`
     }
 
+    if(req.body['profilePic']){
+      commandText += `profilePic = '${req.body['profilePic']}',`
+    }
+
     commandText = commandText.substring(0, commandText.length-1);
 
     client.query(`UPDATE users SET ` + commandText + ` WHERE username = '${req.params.username}'`)
-    .then((output) => {
-      console.log("good12");
-      res.send(output.rows[0]);
+    .then(async (output) => {
+        console.log("good12");
+        let newUser = await client.query(`SELECT * FROM users WHERE username='${req.params.username}'`);
+        res.send(newUser.rows[0]);
     })
     .catch((err) => {
       throw err;
@@ -320,7 +328,7 @@ router.post('/register', async (req, res, next) => {
         return;
     }
 
-    await client.query(`INSERT INTO users(firstname, lastname, email, password, username, phone) VALUES ('${input.firstName}','${input.lastName}','${input.email}','${input.password}','${input.username}', '${input.phone}')`);
+    await client.query(`INSERT INTO users(firstname, lastname, email, password, username, phone, birthday, feature) VALUES ('${input.firstName}','${input.lastName}','${input.email}','${input.password}','${input.username}', '${input.phone}', '${input.birthday}', '${input.feature}')`);
 
     user = await client.query(`SELECT * FROM users WHERE email='${input.email}'`);
 
