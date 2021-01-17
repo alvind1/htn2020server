@@ -3,9 +3,73 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs')
 var pg = require('pg')
+var sharp = require('sharp');
 
 const {config, connectString} = require('../config')
 /* GET users listing. */
+
+router.post('/imageUpload', async(req, res) => {
+  let info = req.body; //Need encoded, username
+  var client = new pg.Client(config);
+  console.log("HI23412");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  command2 = `UPDATE users SET profilePic = '${info["encoded"]}' WHERE username = '${info["username"]}' `;
+  client.query(command2)
+  .then((output) => {
+    console.log("good", output);
+    client.end();
+    res.send("good!");
+    return;
+  })
+  .catch((err) => {
+    throw err;
+  });
+  return;
+});
+
+router.post('/uploadDownloads', async(req, res) => {
+  var client = new pg.Client(config);
+  console.log("HI23412");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  sharp(fs.readFileSync('./Downloads/Olaf.jpg'))
+  .resize({width: 400, height: 400})
+  .toBuffer()
+  .then((img) => {
+    return img.toString('base64');
+  })
+  .then((encoded) => {
+    command1 = `UPDATE users SET age = 11 WHERE firstname = 'userFirst'`;
+    command2 = `UPDATE users SET photos = '${encoded}' WHERE username = 'testUsername'`;
+    return client.query(command2)
+    .then((output) => {
+      //console.log("good", output);
+      client.end();
+      res.send("good!");
+      return;
+    })
+  })
+  .then(() => {
+    res.send("yayy");
+  })
+  .catch((err) => {
+    console.log("nah", err.message);
+    res.send("bad1287");
+  });
+});
 
 router.post('/image', async(req, res) => {
   var client = new pg.Client(config);
@@ -138,6 +202,18 @@ router.put('/:username', async(req, res) => {
       commandText += `email = '${req.body['email']}',`
     }
 
+    if(req.body['bio']){
+      commandText += `bio = '${req.body['bio']}',`
+    }
+
+    if(req.body['feature']){
+      commandText += `feature = '${req.body['feature']}',`
+    }
+
+    if(req.body['profilePic']){
+      commandText += `profilePic = '{${req.body['profilePic'][0]}, ${req.body['profilePic'][0]}, ${req.body['profilePic'][0]}}',`
+    }
+
     commandText = commandText.substring(0, commandText.length-1);
 
     client.query(`UPDATE users SET ` + commandText + ` WHERE username = '${req.params.username}'`)
@@ -205,6 +281,11 @@ router.put('/', async(req, res) => {
     //output = await client.query("ALTER TABLE questions ADD COLUMN username STRING REFERENCES users(username)");
     
     //output = await client.query("ALTER TABLE users ADD COLUMN eliminated BOOLEAN");
+
+    //output = await client.query("ALTER TABLE users ADD COLUMN profilePic STRING");
+    //output = await client.query("ALTER TABLE users ADD COLUMN galleryPics STRING[3]");
+
+    //output = await client.query("UPDATE users SET gallerypics = '{string1, string2, string3}'")
 
     res.send("good123768");
   }catch(err){
@@ -297,6 +378,39 @@ router.post('/beginGroup', async(req, res) => {
   })
   client.end();
 });
+
+router.get('/prevRounds', async(req, res) => {
+  var client = new pg.Client(config);
+  console.log("HI2alsdjfl;ksjdlkfj");
+
+  client.connect()
+  .catch((err) => {
+    console.log(err);
+    res.send("uh oh");
+    return;
+  });
+
+  client.query("SELECT * FROM questions")
+  .then(async (questions) => {
+    return [questions['rows'], await client.query("SELECT * FROM answers")]
+  })
+  .then(async ([questions, answers]) => {
+    return [questions, answers['rows'], await client.query("SELECT * FROM users")]
+  })
+  .then(([questions, answers, users]) => {
+    arr = [];
+    roundNum = questions.length;
+    questions.forEach((item, idx) => {      round = {}
+      round['question'] = item;
+      round['answers'] = idx;
+    })
+    res.send([questions, answers, users['rows']])
+  })
+  .catch((err) => {
+    console.log("err", err.message);
+    res.send("nah 23874");
+  })
+})
 
 router.get('/column', async(req, res) => {
   let info = req.body; //Needs column, table
