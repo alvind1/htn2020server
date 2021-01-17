@@ -8,6 +8,11 @@ var sharp = require('sharp');
 const {config, connectString} = require('../config')
 /* GET users listing. */
 
+router.post('/testUpload', async (req, res) => {
+    console.log("asdfasdfa");
+    res.send("yay");
+});
+
 router.post('/imageUpload', async(req, res) => {
   let info = req.body; //Need encoded, username
   var client = new pg.Client(config);
