@@ -61,17 +61,13 @@ router.post('/uploadDownloads', async(req, res) => {
   })
   .then((encoded) => {
     command1 = `UPDATE users SET age = 11 WHERE firstname = 'userFirst'`;
-    command2 = `UPDATE users SET photos = '${encoded}' WHERE username = 'testUsername'`;
+    command2 = `UPDATE users SET profilePic = '${encoded}' WHERE username = 'Raymod'`;
     return client.query(command2)
-    .then((output) => {
-      //console.log("good", output);
-      client.end();
-      res.send("good!");
-      return;
-    })
   })
   .then(() => {
-    res.send("yayy");
+    //console.log("good", output);
+    client.end();
+    res.send("good!");
   })
   .catch((err) => {
     console.log("nah", err.message);
@@ -181,7 +177,7 @@ router.delete("/:username", async(req, res) => {
 })
 
 router.put('/:username', async(req, res) => {
-  //possible fields: firstName, lastName, age, email, bio, feature, profilePic
+  //possible fields: firstName, lastName, age, email, bio, feature, galleryPics
   try{
     var client = new pg.Client(config);
     console.log("HI");
@@ -299,6 +295,7 @@ router.put('/', async(req, res) => {
     //output = await client.query("ALTER TABLE users ADD COLUMN galleryPics STRING[3]");
 
     //output = await client.query("UPDATE users SET gallerypics = '{string1, string2, string3}'")
+    output = await client.query("DELETE FROM questions");
 
     res.send("good123768");
   }catch(err){
@@ -328,7 +325,7 @@ router.post('/register', async (req, res, next) => {
         return;
     }
 
-    await client.query(`INSERT INTO users(firstname, lastname, email, password, username, phone, birthday, feature) VALUES ('${input.firstName}','${input.lastName}','${input.email}','${input.password}','${input.username}', '${input.phone}', '${input.birthday}', '${input.feature}')`);
+    await client.query(`INSERT INTO users(firstname, lastname, email, password, username, phone, birthday, feature, eliminated) VALUES ('${input.firstName}','${input.lastName}','${input.email}','${input.password}','${input.username}', '${input.phone}', '${input.birthday}', '${input.feature}', FALSE)`);
 
     user = await client.query(`SELECT * FROM users WHERE email='${input.email}'`);
 
@@ -410,14 +407,20 @@ router.get('/prevRounds', async(req, res) => {
   .then(async ([questions, answers]) => {
     return [questions, answers['rows'], await client.query("SELECT * FROM users")]
   })
-  .then(([questions, answers, users]) => {
+  .then(async ([questions, answers, users]) => {
     arr = [];
     roundNum = questions.length;
-    questions.forEach((item, idx) => {      round = {}
+    questions.forEach((item, idx) => {      
+      round = {}
       round['question'] = item;
-      round['answers'] = idx;
-    })
-    res.send([questions, answers, users['rows']])
+      round['answers'] = answers.filter(answer => {
+        return answer['round'] === item['round'];
+      });
+      arr.push(round);
+      return;
+    });
+    users = await users['rows'].reduce((a,x) => ({...a, [x.username]: x}), {})
+    res.send({'prevRounds': arr, "users": users});
   })
   .catch((err) => {
     console.log("err", err.message);
