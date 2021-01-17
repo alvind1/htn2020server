@@ -19,6 +19,7 @@ router.post('/image', async(req, res) => {
   });
 
   output = fs.readFileSync('./Downloads/donkey.jpg');
+
   encodedImage = new Promise(async (resolve, reject) => {
     try{
       resolve(await Buffer.from(output, 'binary').toString('base64'));
